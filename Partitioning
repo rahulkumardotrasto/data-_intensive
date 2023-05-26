@@ -23,7 +23,7 @@ Many programming languages have simple hash functions built in (as they are used
 for example, in Java’s Object.hashCode() and Ruby’s Object#hash, the same key may have a different hash value in different processe
 12) Assign each partition a range of hashes (rather than a range of keys), and every key whose hash falls within a partition’s range will be stored in that partition
 13) Drawback -> lost the ability to do efficient range queries.
-14) n MongoDB, if we have enabled hash-based sharding mode, any range query has to be sent to all partitions.
+14) In MongoDB, if we have enabled hash-based sharding mode, any range query has to be sent to all partitions.
 Range queries on the primary key are not sup‐ ported by Riak , Couchbase , or Voldemort.
 15) Cassandra achieves a compromise between the two partitioning strategies.
 A table in Cassandra can be declared with a compound primary key consisting of several columns.
@@ -108,3 +108,41 @@ On the other hand, with a fixed number of partitions, the size of each partition
 47) In this case, the size of each partition grows proportion‐ ally to the dataset size while the number of nodes remains unchanged, 
 but when you increase the number of nodes, the partitions become smaller again. 
 Since a larger data volume generally requires a larger number of nodes to store, this approach also keeps the size of each partition fairly stable
+48) When a new node joins the cluster, it randomly chooses a fixed number of existing partitions to split, 
+and then takes ownership of one half of each of those split partitions while leaving the other half of each partition in place. 
+The randomization can produce unfair splits, but when averaged over a larger number of partitions (in Cassandra, 256 partitions per node by default),
+the new node ends up taking a fair share of the load from the existing nodes. 
+Cassandra 3.0 introduced an alternative rebalancing algorithm that avoids unfair splits
+
+Operations: Automatic or Manual Rebalancing
+49) Couchbase, Riak, and Voldemort generate a suggested partition assignment automatically, but require an administrator to commit it before it takes effect
+50) Automation can be dangerous in combination with automatic failure detection. 
+For example, say one node is overloaded and is temporarily slow to respond to requests. 
+The other nodes conclude that the overloaded node is dead, and automatically rebalance the cluster to move load away from it. 
+This puts additional load on the overloaded node, other nodes, and the network making the situation worse and potentially causing a cascading failure. 
+For that reason, it can be a good thing to have a human in the loop for rebalancing. 
+It’s slower than a fully automatic process, but it can help prevent operational surprises
+
+Request Routing
+51) there are different approaches to routing a request to right node
+i) Allow clients to contact any node (e.g., via a round-robin load balancer). 
+If that node coincidentally owns the partition to which the request applies, it can handle the request directly; 
+otherwise, it forwards the request to the appropriate node, receives the reply, and passes the reply along to the client.
+ii) Send all requests from clients to a routing tier first, which determines the node that should handle each request and forwards it accordingly. 
+This routing tier does not itself handle any requests; it only acts as a partition-aware load balancer. 
+iii) Require that clients be aware of the partitioning and the assignment of partitions to nodes. 
+In this case, a client can connect directly to the appropriate node, without any intermediary
+52) Many distributed data systems rely on a separate coordination service such as ZooKeeper to keep track of this cluster metadata.
+Each node registers itself in ZooKeeper, and ZooKeeper maintains the authoritative mapping of partitions to nodes. 
+Other actors, such as the routing tier or the partitioning-aware client, can subscribe to this information in ZooKeeper. 
+Whenever a partition changes ownership, or a node is added or removed, ZooKeeper notifies the routing tier so that it can keep its routing information up to date
+53) HBase, SolrCloud, and Kafka also use ZooKeeper to track partition assignment. 
+MongoDB has a similar architecture, but it relies on its own config server implemen‐ tation and mongos daemons as the routing tier. 
+Cassandra and Riak take a different approach: they use a gossip protocol among the nodes to disseminate any changes in cluster state. 
+Requests can be sent to any node, and that node forwards them to the appropriate node for the requested partition. 
+This model puts more complexity in the database nodes but avoids the dependency on an external coordination service such as ZooKeeper.
+54) Couchbase does not rebalance automatically, which simplifies the design. 
+Normally it is configured with a routing tier called moxi, which learns about routing changes from the cluster nodes.
+When using a routing tier or when sending requests to a random node, clients still need to find the IP addresses to connect to. 
+These are not as fast-changing as the assignment of partitions to nodes, so it is often sufficient to use DNS for this purpose.
+
