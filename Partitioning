@@ -77,3 +77,34 @@ However, in a term- partitioned index, that would require a distributed transact
 35) Updates to global secondary indexes are often asynchronous (that is, if you read the index shortly after a write, the change you just made may not yet be reflected in the index).
 For example, Amazon DynamoDB states that its global secondary indexes are updated within a fraction of a second in normal circumstances, 
 but may experience longer propagation delays in cases of faults in the infrastructure
+
+Rebalancing Partitions
+36) hash mod N -> Not a good approach
+37) Fixed number of partitions -> create many more partitions than there are nodes, and assign several partitions to each node. 
+For example, a database run‐ ning on a cluster of 10 nodes may be split into 1,000 partitions from the outset 
+so that approximately 100 partitions are assigned to each node.
+38) This approach to rebalancing is used in Riak, Elasticsearch, Couchbase, and Voldemort
+39) In this configuration, the number of partitions is usually fixed when the database is first set up and not changed afterward
+40) The best performance is achieved when the size of partitions is “just right,” neither too big nor too small, 
+which can be hard to achieve if the number of partitions is fixed but the dataset size varies.
+
+Dynamic partitioning
+41) For databases that use key range partitioning, a fixed number of partitions with fixed boundaries would be very inconvenient
+42) For that reason, key range–partitioned databases such as HBase and RethinkDB create partitions dynamically
+43) In the case of HBase, the transfer of partition files happens through HDFS, the underlying distributed filesystem
+44) A caveat is that an empty database starts off with a single partition, 
+since there is no a priori information about where to draw the partition boundaries. 
+While the dataset is small until it hits the point at which the first partition is split—all writes have to be processed by a single node while the other nodes sit idle.
+To miti‐ gate this issue, HBase and MongoDB allow an initial set of partitions to be configured on an empty database (this is called pre-splitting).
+In the case of key-range partition‐ ing, pre-splitting requires that you already know what the key distribution is going to look like. 
+Dynamic partitioning is not only suitable for key range–partitioned data, but can equally well be used with hash-partitioned data. 
+MongoDB since version 2.4 supports both key-range and hash partitioning, and it splits partitions dynamically in either case.
+
+Partitioning proportionally to nodes
+45) With dynamic partitioning, the number of partitions is proportional to the size of the dataset, 
+since the splitting and merging processes keep the size of each partition between some fixed minimum and maximum. 
+On the other hand, with a fixed number of partitions, the size of each partition is proportional to the size of the dataset
+46) A third option, used by Cassandra and Ketama, is to make the number of partitions proportional to the number of nodes
+47) In this case, the size of each partition grows proportion‐ ally to the dataset size while the number of nodes remains unchanged, 
+but when you increase the number of nodes, the partitions become smaller again. 
+Since a larger data volume generally requires a larger number of nodes to store, this approach also keeps the size of each partition fairly stable
