@@ -1,0 +1,20 @@
+Snapshot Isolation and Repeatable Read
+nonrepeatable read or read skew
+Snapshot isolation is the most common solution to this problem. The idea is that each transaction reads from a consistent snapshot of the database.
+
+Implementing snapshot isolation
+To implement snapshot isolation, databases use a generalization of the mechanism we saw for preventing dirty reads.
+The database must potentially keep several different committed versions of an object, 
+because various in-progress trans‐ actions may need to see the state of the database at different points in time. 
+Because it maintains several versions of an object side by side, this technique is known as multi- version concurrency control (MVCC)
+
+Visibility rules for observing a consistent snapshot
+
+Indexes and snapshot isolation
+
+Repeatable read and naming confusion
+
+Preventing Lost Updates
+
+Atomic write operations
+
