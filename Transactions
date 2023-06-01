@@ -18,3 +18,47 @@ Preventing Lost Updates
 
 Atomic write operations
 
+Automatically detecting lost updates
+
+Compare-and-set
+
+Conflict resolution and replication
+
+Write Skew and Phantoms
+
+Phantoms causing write skew
+
+Materializing conflicts
+
+Serializability
+
+Actual Serial Execution
+
+Encapsulating transactions in stored procedures
+
+Pros and cons of stored procedures
+
+Partitioning
+
+Summary of serial execution
+
+Performance of two-phase locking
+
+Predicate locks
+
+Index-range locks
+
+Serializable Snapshot Isolation
+
+Pessimistic versus optimistic concurrency control
+
+Decisions based on an outdated premise
+
+Detecting stale MVCC reads
+
+Detecting writes that affect prior reads
+
+
+
+
+
