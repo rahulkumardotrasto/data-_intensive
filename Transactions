@@ -58,7 +58,7 @@ Detecting stale MVCC reads
 
 Detecting writes that affect prior reads
 
-
+Performance of serializable snapshot isolation
 
 
 
